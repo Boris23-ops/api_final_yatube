@@ -57,7 +57,7 @@ class FollowViewSet(viewsets.ModelViewSet):
     """Обрабатывает API запросы для модели Подписок."""
 
     serializer_class = FollowSerializer
-    permission_classes = [permissions.IsAuthenticated, ]
+    permission_classes = [permissions.IsAuthenticated, IsAuthorOrReadOnly]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('following__username',)
 
