@@ -1,23 +1,70 @@
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
 
-
-from posts.models import Comment, Post
+from posts.models import Comment, Follow, Group, Post, User
 
 
 class PostSerializer(serializers.ModelSerializer):
-    author = SlugRelatedField(slug_field='username', read_only=True)
+    """Сериализатор для модели Post."""
 
-    class Meta:
-        fields = '__all__'
-        model = Post
-
-
-class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field='username'
+        slug_field='username',
+        read_only=True
     )
 
     class Meta:
+        model = Post
         fields = '__all__'
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Group."""
+
+    class Meta:
+        model = Group
+        fields = '__all__'
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Comment."""
+
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+
+    class Meta:
         model = Comment
+        fields = '__all__'
+        read_only_fields = ('post',)
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Follow."""
+
+    user = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
+    following = serializers.SlugRelatedField(
+        slug_field='username',
+        queryset=User.objects.all()
+    )
+
+    class Meta:
+        model = Follow
+        fields = '__all__'
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=('user', 'following'),
+                message='Уже подписаны на этого автора'
+            )
+        ]
+
+    def validate(self, data):
+        if self.context['request'].user == data['following']:
+            raise serializers.ValidationError(
+                'Вы не можете подписаться сам на себя!'
+            )
+        return data
