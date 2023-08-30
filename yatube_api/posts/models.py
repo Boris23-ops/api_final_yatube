@@ -15,6 +15,9 @@ class Group(models.Model):
     def __str__(self):
         return self.title[:TEXT]
 
+    class Meta:
+        ordering = ('title',)
+
 
 class Post(models.Model):
     """Модель постов."""
@@ -47,6 +50,9 @@ class Post(models.Model):
     def __str__(self):
         return self.text[:TEXT]
 
+    class Meta:
+        ordering = ['pub_date']
+
 
 class Comment(models.Model):
     """"Модель комментариев."""
@@ -68,6 +74,9 @@ class Comment(models.Model):
         'Дата добавления', auto_now_add=True, db_index=True
     )
 
+    def __str__(self):
+        return self.text[:TEXT]
+
 
 class Follow(models.Model):
     """"Модель подписки на автора."""
@@ -87,3 +96,11 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.user} подписчик автора - {self.following}'
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('following')),
+                name='%(app_label)s_%(class)s_prevent_self_follow'
+            )
+        ]
