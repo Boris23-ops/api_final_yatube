@@ -51,7 +51,7 @@ class Post(models.Model):
         return self.text[:TEXT]
 
     class Meta:
-        ordering = ['pub_date']
+        ordering = {'pub_date'}
 
 
 class Comment(models.Model):
@@ -94,13 +94,17 @@ class Follow(models.Model):
         related_name='following',
     )
 
-    def __str__(self):
-        return f'{self.user} подписчик автора - {self.following}'
-
     class Meta:
         constraints = [
             models.CheckConstraint(
                 check=~models.Q(user=models.F('following')),
                 name='%(app_label)s_%(class)s_prevent_self_follow'
+            ),
+            models.UniqueConstraint(
+                fields=['user', 'following'],
+                name='%(app_label)s_%(class)s_unique_follow'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} подписчик автора - {self.following}'
